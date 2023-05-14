@@ -1,0 +1,45 @@
+#동시에 구글, 네이버, 다음 3개 사이트 한 번에 검색하기
+
+#Step 0. 필요한 모듈과 라이브러리를 로딩하고 검색어를 입력 받습니다
+from bs4 import BeautifulSoup     
+from selenium import webdriver
+import time
+
+query_txt = input('크롤링할 키워드는 무엇입니까?: ')
+
+#Step 1. 크롬 드라이버를 사용해서 웹 브라우저를 실행합니다.
+path = "c:/Users/kju13/Downloads/chromedriver_win32/chromedriver.exe"
+driver = webdriver.Chrome(path)
+
+#구글
+driver.get("https://www.google.co.kr/?hl=ko")
+time.sleep(3)  # 위 페이지가 모두 열릴 때 까지 3초 기다립니다.
+
+element = driver.find_element_by_name('q') #검색창 html의 name이 'q'여서 q다
+element.send_keys(query_txt)               #검색 단어를 입력한다
+
+element.submit()
+
+driver.execute_script("window.open('');")
+driver.switch_to.window(driver.window_handles[1])
+#네이버
+driver.get("https://www.naver.com/")
+time.sleep(3)  # 위 페이지가 모두 열릴 때 까지 3초 기다립니다.
+
+driver.find_element_by_id("query").click()
+element = driver.find_element_by_id("query")
+element.send_keys(query_txt)
+
+driver.find_element_by_id("search_btn").click()
+
+driver.execute_script("window.open('');")
+driver.switch_to.window(driver.window_handles[2])
+#다음
+driver.get("https://www.daum.net/")
+time.sleep(3)  # 위 페이지가 모두 열릴 때 까지 3초 기다립니다.
+
+driver.find_element_by_id("q").click()
+element = driver.find_element_by_id("q")
+element.send_keys(query_txt)
+
+element.submit()
