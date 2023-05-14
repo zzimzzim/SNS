@@ -20,7 +20,7 @@ element.send_keys(query_txt)               #검색 단어를 입력한다
 
 element.submit()
 
-driver.execute_script("window.open('');")
+driver.execute_script("window.open('');")##새탭 열기
 driver.switch_to.window(driver.window_handles[1])
 #네이버
 driver.get("https://www.naver.com/")
