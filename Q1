@@ -1,0 +1,127 @@
+from bs4 import BeautifulSoup     #작업이 완료될때까지 키보드와 마우스를 조작하지 마시오!!!
+from selenium import webdriver
+import time
+import pyautogui
+import openpyxl
+
+query_txt = "캠프"
+search_1 = "20190101"
+search_2 = "20190331"
+
+#크롬에서 나라장터 열고 검색
+path = "c:/Users/kju13/Downloads/chromedriver_win32/chromedriver.exe"
+driver = webdriver.Chrome(path)
+
+driver.get("https://www.g2b.go.kr:8101/ep/tbid/tbidFwd.do")#주소
+time.sleep(3)  # 위 페이지가 모두 열릴 때 까지 3초 기다립니다.
+
+driver.find_element_by_id("bidNm").click()# 키워드 검색
+element = driver.find_element_by_id("bidNm")
+element.send_keys(query_txt)
+
+driver.find_element_by_name("fromBidDt").click()# 조회시작일자
+element = driver.find_element_by_name("fromBidDt")
+for i in range(5):#조회일자 검색창을 비움
+    pyautogui.press('delete')
+    pyautogui.press('backspace')
+element.send_keys(search_1)
+
+driver.find_element_by_name("toBidDt").click()#조회 종료일자
+element = driver.find_element_by_name("toBidDt")
+for i in range(5):#조회일자 검색창을 비움
+    pyautogui.press('delete')
+    pyautogui.press('backspace')
+element.send_keys(search_2)
+
+driver.find_element_by_link_text("검색").click()
+
+
+save_folder = "C:/Users/kju13/Downloads/SNS_20181493_김준영_기말과제대체/Q1"#저장폴더
+
+time.sleep(1)
+
+save_list = []
+
+for i in range(3):
+    elem = driver.find_element_by_class_name('results')
+    div_list = elem.find_elements_by_tag_name('div')
+
+    results = []
+    for div in div_list:
+        results.append(div.text)
+        a_tags = div.find_elements_by_tag_name('a')
+        if a_tags:
+            for a_tag in a_tags:
+                link = a_tag.get_attribute('href')
+                results.append(link)
+    result = [results[i * 12:(i + 1) * 12] for i in range((len(results) + 12 - 1) // 12 )]
+    save_list.append(result)
+    driver.find_element_by_class_name("default").click()
+  
+driver.close()
+file = open("Q1.txt", 'w')
+
+count = 1
+
+for k in range(len(save_list)):
+    for j in range(len(save_list[k])):
+        file.write(str(count) + "번째 공고내용을 추출합니다~~~~" + "\n")
+        file.write("1.업무: "+ save_list[k][j][0] + "\n")
+        file.write("2.공고번호-차수: "+ save_list[k][j][1] + "\n")
+        file.write("3.분류: "+ save_list[k][j][3] + "\n")
+        file.write("4.공고명: "+ save_list[k][j][4] + "\n")
+        file.write("5.URL 주소: "+ save_list[k][j][5] + "\n")
+        file.write("6.공고기관: "+ save_list[k][j][6] + "\n")
+        file.write("7.수요기관: "+ save_list[k][j][7] + "\n")
+        file.write("8.계약방법: "+ save_list[k][j][8] + "\n")
+        file.write("9.입력일시(입찰마감일시): "+ save_list[k][j][9] + "\n")
+        file.write("10.공동수급: "+ save_list[k][j][10] + "\n")
+        file.write("11.투찰여부: "+ save_list[k][j][11] + "\n")
+        file.write("\n\n")
+        count+=1
+file.close()
+
+wb = openpyxl.Workbook()
+new_filename = "Q1.xlsx"
+
+wb.active.title = "Sheet1"
+
+ws = wb["Sheet1"]
+
+ws['A1'] = ""
+ws['B1'] = "업무"
+ws['C1'] = "공고번호-차수"
+ws['D1'] = "분류"
+ws['E1'] = "공고명"
+ws['F1'] = "공고URL주소"
+ws['G1'] = "공고기관"
+ws['H1'] = "수요기관"
+ws['I1'] = "계약방법"
+ws['J1'] = "입력일시(입찰마감일시)"
+ws['K1'] = "공동수급"
+ws['L1'] = "투찰"
+
+xl_count = 2
+
+k = 0
+j = 0
+
+for k in range(len(save_list)):
+    for j in range(len(save_list[k])):
+        ws.cell(row=xl_count, column=1).value = xl_count-1
+        ws.cell(row=xl_count, column=2).value = save_list[k][j][0] #cell(세로,가로)
+        ws.cell(row=xl_count, column=3).value = save_list[k][j][1]
+        ws.cell(row=xl_count, column=4).value = save_list[k][j][2]
+        ws.cell(row=xl_count, column=5).value = save_list[k][j][3]
+        ws.cell(row=xl_count, column=6).value = save_list[k][j][4]
+        ws.cell(row=xl_count, column=7).value = save_list[k][j][5]
+        ws.cell(row=xl_count, column=8).value = save_list[k][j][6]
+        ws.cell(row=xl_count, column=9).value = save_list[k][j][7]
+        ws.cell(row=xl_count, column=10).value = save_list[k][j][8]
+        ws.cell(row=xl_count, column=11).value = save_list[k][j][9]
+        ws.cell(row=xl_count, column=12).value = save_list[k][j][10]
+        xl_count+=1
+
+wb.save(new_filename)
+
+print("작업 완료")
