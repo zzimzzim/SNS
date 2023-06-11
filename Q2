@@ -1,0 +1,103 @@
+from bs4 import BeautifulSoup     
+from selenium import webdriver
+import openpyxl
+
+query_txt = "수문딸기체험"#크롤링할 키워드
+query_txt_2 = []#반드시 포함해야 하는 단어
+query_txt_3 = ["안경", "린드버그"]#제외해야 할 단어
+day_1 = "20190101" #조회시작일자
+day_2 = "20190420" #조회종료일자
+count = 20 #조회할갯수
+
+path = "c:/Users/kju13/Downloads/chromedriver_win32/chromedriver.exe"
+driver = webdriver.Chrome(path)
+
+url = 'https://search.naver.com/search.naver?where=blog&query=' + query_txt + '&sm=tab_opt&nso=so:r,p:from' + day_1 + 'to' + day_2
+
+driver.get(url)
+req = driver.page_source
+soup = BeautifulSoup(req, 'html.parser')
+
+articles = soup.select('#_view_review_body_html > div > more-contents > div > ul > li')
+
+url_list = []
+title_list = []
+
+for article in articles:
+    a_tag = article.select_one("div > div > a")
+    url_list.append(a_tag["data-url"])
+    title_list.append(article.find("a", attrs={"class":"api_txt_lines total_tit"}).get_text())
+
+deleat_list = []
+deleat_list_2 = []
+
+#제외단어검사
+for d in range(len(title_list)):
+    for d2 in range(len(query_txt_3)):
+        if title_list[d].find(query_txt_3[d2]) != -1:
+            deleat_list.append(d)
+
+for co in range(len(deleat_list)-1):
+    if deleat_list[co] == deleat_list[co + 1]:
+        deleat_list_2.append(co)
+deleat_list_2.reverse()
+
+for z in range(len(deleat_list_2)):
+    del deleat_list[deleat_list_2[z]]
+z = 0
+
+for z in range(len(deleat_list)):
+    del url_list[deleat_list[z]]
+    del title_list[deleat_list[z]]
+
+file = open("Q2.txt", 'w', encoding='UTF8')
+
+wb = openpyxl.Workbook()
+new_filename = "Q2.xlsx"
+wb.active.title = "Sheet1"
+ws = wb["Sheet1"]
+
+ws['A1'] = ""
+ws['B1'] = "블로그 주소"
+ws['C1'] = "작성자닉네임"
+ws['D1'] = "작성일자"
+ws['E1'] = "블로그내용"
+
+count_2 = 0
+
+for i in range(len(url_list)):
+    content_list = ""
+    content_list2 = ""
+    driver.get(url_list[i])
+    driver.switch_to.frame('mainFrame')
+    overlays = ".se-component.se-text.se-l-default"
+    overlays2 = 'div.blog2_container'
+    contents = driver.find_elements_by_css_selector(overlays)#본문
+    contents2 = driver.find_elements_by_css_selector(overlays2)#작성자 이름및 작성시간
+    for content in contents:
+        content_list = content_list + content.text
+    for content2 in contents2:
+        content_list2 = content_list2 + content2.text
+    count_wo = 0
+    if content_list2.find('・') != -1:
+        count_wo = content_list2.index('・')
+
+    file.write("총" + str(len(url_list)) + "건 중" + str(count_2+1) + "번째 블로그============\n")
+    file.write("1.블로그 주소:" + url_list[0] + "\n")
+    file.write("2.작성자닉네임:" + content_list2[:count_wo] + "\n")
+    file.write("3.작성일자:" + content_list2[count_wo+1:] + "\n")
+    file.write("4.블로그내용:" + content_list + "\n\n")
+
+    ws.cell(row=count_2+2, column=1).value = count_2+1
+    ws.cell(row=count_2+2, column=2).value = url_list[0]
+    ws.cell(row=count_2+2, column=3).value = content_list2[:count_wo]
+    ws.cell(row=count_2+2, column=4).value = content_list2[count_wo+1:]
+    ws.cell(row=count_2+2, column=5).value = content_list
+    count_2 += 1
+
+file.close()
+wb.save(new_filename)
+
+driver.close()
+
+print("크롤링 완료")
