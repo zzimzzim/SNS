@@ -1,0 +1,55 @@
+from bs4 import BeautifulSoup     
+from selenium import webdriver
+import requests
+import urllib.request
+import urllib
+import sys
+import time
+
+query_txt = "고양이"#검색할 것
+max_img_val = 280 #이미지 갯수
+foder = "C:/Users/kju13/Downloads/SNS_20181493_김준영_기말과제대체/Q3/고양이"#저장 폴더
+
+path = "c:/Users/kju13/Downloads/chromedriver_win32/chromedriver.exe"
+driver = webdriver.Chrome(path)
+
+img_count = 1
+j = 1
+
+while True:
+    url = "https://pixabay.com/ko/images/search/" + query_txt + "/?pagi=" + str(j)
+    driver.get(url)
+    time.sleep(1)
+    req = driver.page_source
+    soup = BeautifulSoup(req, 'html.parser')
+    imgs = soup.select('#app > div:nth-child(1) > div > div.container--wYO8e > div.results--mB75j > div > div')
+    for img in imgs:
+        for i in range(4):
+            for z in range(24):
+                img_list = ""
+                img_tag = img.select_one("div:nth-child("+ str(i+1) +") > div:nth-child("+ str(z+1) + ") > div > a > img")
+                if img_tag.get('data-lazy-src')==None:
+                    img_list = img_tag.get('src')
+                else:
+                    img_list = img_tag.get('data-lazy-src')
+                print(str(img_count) + "." + img_list)
+                save_fo = foder + '/' + str(img_count) + '.jpg'
+                req_2 = urllib.request.Request(img_list, headers={'User-Agent': 'Mozilla/5.0'})
+                try:
+                    imgurl = urllib.request.urlopen(req_2).read()
+                    with open(save_fo, "wb") as f:
+                          f.write(imgurl)
+                except urllib.error.HTTPError:
+                    sys.exit(0)
+                img_count += 1
+                if max_img_val < img_count:
+                    break
+            if max_img_val < img_count:
+                    break
+        if max_img_val < img_count:
+                    break
+    if max_img_val < img_count:
+                    break
+    j += 1
+print("작업완료")
+driver.close()
