@@ -1,0 +1,96 @@
+# 모듈, 라이브러리
+from bs4 import BeautifulSoup
+from selenium import webdriver
+import time
+import pandas as pd  
+import xlwt
+
+# 검색 조건
+con1 = input('1. 크롤링할 키워드는 무엇입니까?:')
+con2 = list(input('''2. 포함할 키워드를 입력하세요:(예:국내 국외) -> ['국내','국외']''').split())
+con3 = list(input('''3. 제외할 키워드를 입력하세요:(예:국내 국외) -> ['국내','국외']''').split())
+con4 = int(input('4. 크롤링할 건수는 몇 건입니까?:'))
+con5 = input('5. 조회를 시작할 년도를 입력하세요(예:20230101):')
+con6 = input('6. 조회를 종료할 날짜를 입력하세요(예:20231231):')
+ff_name = input('7. txt 형태로 저장할 경로와 파일명을 확장자 포함해서 쓰세요(c:\\py_temp\\ex4.txt): ')
+fc_name = input('8. csv 형태로 저장할 경로와 파일명을 확장자 포함해서 쓰세요(c:\\py_temp\\ex4.csv): ')
+fx_name = input('9. xls 형태로 저장할 경로와 파일명을 확장자 포함해서 쓰세요(c:\\py_temp\\ex4.xls): ')
+
+# 키워드 설정
+inckey = ' '.join(con2)
+exckey = ' '.join(['-'+keyword for keyword in con3])
+query = con1+' '+inckey+' '+exckey
+
+# 크롬 드라이버 경로설정
+path = "c:/py_temp/chromedriver.exe"
+driver = webdriver.Chrome(path)
+
+# 사이트 주소 설정
+driver.get("https://search.naver.com/search.naver?where=blog&query="+query+"&sm=tab_opt&nso=so:r,p:from"+con5+"to"+con6)
+time.sleep(2)
+
+# 블로그 내용 추출
+num = 1
+num2 = [ ]
+title2 = [ ]
+cont2 = [ ]
+nick2 = [ ]
+site2 = [ ]
+
+full_html = driver.page_source
+soup = BeautifulSoup(full_html,'html.parser')
+content_list = soup.find('ul', class_="lst_total")
+
+count = 0
+for i in content_list.find_all('li', "bx"):
+    num2.append(num)
+    print('번호:',num)
+    num += 1
+
+    title = i.find('a', 'api_txt_lines total_tit').get_text()
+    title2.append(title)
+    print('제목:', title.strip())
+
+    cont = i.find('div', 'api_txt_lines dsc_txt').get_text()
+    cont2.append(cont)
+    print('내용:', cont.strip())
+
+    nick = i.find('a', 'sub_txt sub_name').get_text()
+    nick2.append(nick)
+    print('닉네임:', nick.strip())
+
+    site = i.find('a').get('data-url')
+    site2.append(site)
+    print('사이트:', site.strip())
+    print('\n')
+
+
+    count += 1
+    if count >= con4:
+        break
+
+result = pd.DataFrame()
+
+result['번호'] = num2
+result['제목'] = title2
+result['내용'] = cont2
+result['닉네임'] = nick2
+result['사이트'] = site2
+
+# txt 파일로 저장하기
+ff = open(ff_name, 'a', encoding='UTF-8')
+ff.write(str(title2))
+ff.write(str(cont2))
+ff.write(str(nick2))
+ff.write(str(site2))
+ff.close( )
+print("\n")
+print(" txt 파일 저장 경로: %s" %ff_name)  
+
+# csv 형태로 저장하기
+result.to_csv(fc_name, encoding="utf-8-sig")
+print(" csv 파일 저장 경로: %s" %fc_name)
+
+# 엑셀 형태로 저장하기
+result.to_excel(fx_name)
+print(" xls 파일 저장 경로: %s" %fx_name)
