@@ -1,0 +1,54 @@
+from bs4 import BeautifulSoup     
+from selenium import webdriver
+import time
+import urllib.request
+import urllib
+from selenium.webdriver.common.keys import Keys
+import os
+
+path = "c:/Users/kju13/Downloads/chromedriver_win32/chromedriver.exe"
+driver = webdriver.Chrome(path)
+
+query_txt = "호랑이"
+max_img_count = 20 #사진 갯수
+img_count = 0
+
+
+foder = "C:/Users/kju13/Downloads/SNS빅데이터분석_소스코드모음/savefile"
+google_url = "https://www.google.com/search?q="+ query_txt +"&tbm=isch&ved=2ahUKEwjn14yK2cn_AhUMEogKHUbEBZ4Q2-cCegQIABAA&oq=" + query_txt + "&gs_lcp=CgNpbWcQAzIICAAQgAQQsQMyCAgAEIAEELEDMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQ6BAgjECc6CAgAELEDEIMBOgsIABCABBCxAxCDAVDgCFikG2DYHGgGcAB4AYABfIgByAqSAQQwLjEymAEAoAEBqgELZ3dzLXdpei1pbWfAAQE&sclient=img&ei=MlWNZOf2I4ykoATGiJfwCQ&bih=841&biw=1145&rlz=1C1IBEF_koKR1009KR1009"
+driver.get(google_url)
+time.sleep(2)
+
+
+for i in range(10):
+    driver.execute_script("window.scrollTo(0,document.body.scrollHeight);")
+    time.sleep(1)
+    
+scroll_down(driver) 
+soup = BeautifulSoup(driver.page_source, 'html.parser')
+z = 0
+while True:
+    try:
+        imgs = soup.select_one("#islrg > div.islrc > div:nth-child(" + str(z+2) + ") > a.wXeWr.islib.nfEiy > div.bRMDJf.islir > img")
+        if imgs == None:
+            pass
+        else:
+            img_tag = imgs.get('src')
+            save_fo = foder +'/' + query_txt + str(img_count+1) + '.jpg'
+            req_2 = urllib.request.Request(img_tag, headers={'User-Agent': 'Mozilla/5.0'})
+            try:
+                imgurl = urllib.request.urlopen(req_2).read()
+                with open(save_fo, "wb") as f:
+                    f.write(imgurl)
+                    print(str(img_count+1)+"번 성공")
+                    img_count+=1
+                    if img_count >= max_img_count:
+                        break
+            except urllib.error.HTTPError:
+                pass
+    except AttributeError:
+        pass
+    z+=1
+
+print("크롤링 완료")
+driver.close()
