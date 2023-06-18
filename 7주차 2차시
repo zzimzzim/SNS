@@ -1,0 +1,33 @@
+# 모듈, 라이브러리
+from bs4 import BeautifulSoup     
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import time
+
+keyword = "동서대학교"
+
+# 크롬 드라이버 경로설정
+driver = webdriver.Chrome("c:/py_temp/chromedriver.exe")
+
+# 사이트 주소 설정
+driver.get("https://www.naver.com")
+time.sleep(2)
+
+# 검색 창 입력
+element = driver.find_element(By.ID,"query")
+element.send_keys(keyword)
+driver.find_element(By.ID, "search_btn").click()
+
+# View -> blog
+driver.find_element(By.CSS_SELECTOR, "#lnb > div.lnb_group > div > ul > li:nth-child(3) > a").click()
+driver.find_element(By.CSS_SELECTOR, "#snb > div.api_group_option_filter._search_option_simple_wrap > div > div.option_area.type_sort > a:nth-child(2)").click()
+
+# 블로그 섹션 텍스트 추출
+full_html = driver.page_source
+soup = BeautifulSoup(form,'html.parser')
+content_list = soup.find('ul', class_="lst_total")
+
+for i in content_list:
+    print(i.text.strip())
+    print("\n")
