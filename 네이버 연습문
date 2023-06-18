@@ -1,0 +1,74 @@
+from bs4 import BeautifulSoup     
+from selenium import webdriver
+import openpyxl
+import pandas as pd
+import os
+
+query_txt = "사자"#크롤링할 키워드
+max_count = 10 #조회할갯수
+
+path = "c:/Users/kju13/Downloads/chromedriver_win32/chromedriver.exe"
+driver = webdriver.Chrome(path)
+foder = "C:/Users/kju13/Downloads/SNS빅데이터분석_소스코드모음/save2"
+
+url = 'https://search.naver.com/search.naver?query=' + query_txt + '&nso=&where=blog&sm=tab_opt'
+driver.get(url)
+req = driver.page_source
+soup = BeautifulSoup(req, 'html.parser')
+
+articles = soup.select('#_view_review_body_html > div > more-contents > div > ul > li')
+
+nick_list = [] #닉넴
+title_list = [] #제목
+val_list = [] #내용
+day_list = [] #일자
+count = 0
+
+for article in articles:
+    title_list.append(article.find("a", attrs={"class":"api_txt_lines total_tit"}).get_text())
+    day_list.append(article.find('span', attrs={"class":"sub_time sub_txt"}).get_text())
+    val_list.append(article.find('div', attrs={"class":"api_txt_lines dsc_txt"}).get_text())
+    nick_list.append(article.find('a', attrs={"class":"sub_txt sub_name"}).get_text())
+    count+=1
+    if count >= max_count:
+        break
+
+file = open(foder + "/4.txt", 'w', encoding='UTF8')
+
+for i in range(max_count):
+    file.write("1.번호:"+str(i+1) + "\n")
+    file.write("2.제목:"+ title_list[i] + "\n")
+    file.write("3.내용:"+ val_list[i] + "\n")
+    file.write("4.작성일자:"+ day_list[i] + "\n")
+    file.write("5.블로그닉네임:"+ nick_list[i] + "\n")
+    file.write("==============================================================================" + "\n")
+file.close()
+
+wb = openpyxl.Workbook()
+new_filename = "4.xlsx"
+wb.active.title = "Sheet1"
+ws = wb["Sheet1"]
+
+ws['A1'] = ""
+ws['B1'] = "제목"
+ws['C1'] = "내용"
+ws['D1'] = "작성일자"
+ws['E1'] = "블로그닉네임"
+
+for z in range(max_count):
+    ws.cell(row=z+2, column=1).value = z+1
+    ws.cell(row=z+2, column=2).value = title_list[z]
+    ws.cell(row=z+2, column=3).value = val_list[z]
+    ws.cell(row=z+2, column=4).value = day_list[z]
+    ws.cell(row=z+2, column=5).value = nick_list[z]
+wb.save(foder + '/' +new_filename)
+
+df1=pd.DataFrame({'제목':title_list,'내용':val_list,'작성일자':day_list, '블로그닉네임':nick_list})
+os.chdir(foder)
+df1.to_csv('4.csv')
+
+
+
+driver.close()
+
+print("크롤링 완료")
